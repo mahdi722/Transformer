@@ -1,5 +1,6 @@
 from Encoder import Encoder
 from Decoder import Decoder
+import torch.nn as nn
 class Transformer(nn.Module):
     def __init__(self, num_layers, d_model, num_heads, d_ff, vocab_size, max_len=5000, dropout=0.1):
         super(Transformer, self).__init__()
