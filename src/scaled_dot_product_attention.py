@@ -23,7 +23,9 @@ class SingleHeadAttention(nn.Module):
         - d_k will be 512 // 8 = 64
         """
         super(SingleHeadAttention, self).__init__()
-        
+        """ Paper Reference:
+                Page 3, Figure 2 (Architecture Diagram)
+                Equation (1): Splitting d_model into h heads"""
         self.d_k = d_model // num_heads
         self.d_model = d_model
         self.num_heads = num_heads
@@ -34,7 +36,10 @@ class SingleHeadAttention(nn.Module):
         self.w_q = nn.Linear(in_features=d_model, out_features=d_model, bias=True)
         self.w_k = nn.Linear(in_features=d_model, out_features=d_model, bias=True)
         self.w_v = nn.Linear(in_features=d_model, out_features=d_model, bias=True)
-
+        """Paper Reference:
+            Page 3, Section 3.2.2
+            "In this work we use h = 8 parallel attention layers, or heads"
+            Implements the linear projections for queries, keys, and values"""
     def forward(self, query, key, value, mask=None):
         """
         Compute single head attention
@@ -70,16 +75,29 @@ class SingleHeadAttention(nn.Module):
         # K transposed shape: (batch_size, num_heads, d_k, sequence_length)
         # Result score shape: (batch_size, num_heads, sequence_length, sequence_length)
         scores = torch.matmul(input=Q, other=K.transpose(dim0=-2, dim1=-1)) / torch.sqrt(input=torch.tensor(data=self.d_k, dtype=torch.float32))
+        """Paper Reference:
+
+            Page 3, Equation (2): Scaled Dot-Product Attention
+            Attention(Q, K, V) = softmax(QK^T / √d_k)V
+            The √d_k scaling prevents dot products from growing large in magnitude"""
         # Apply mask if provided
         # Masks out certain attention connections by setting them to -inf
         if mask is not None:
             scores = scores.masked_fill(mask == 0, value=torch.float('-inf'))
-        
+        """Paper Reference:
+
+            Page 6, Section 3.3 "Masking"
+            Used in encoder-decoder attention and self-attention layers
+            Prevents attending to padding tokens in the input sequence"""
         # Compute attention weights using softmax
         # Softmax applied across the last dimension
         # attention_weight shape: (batch_size, num_heads, sequence_length, sequence_length)
         attention_weight = F.softmax(input=scores, dim=-1)
+        """Paper Reference:
 
+            Page 3, Equation (2): Completing the Scaled Dot-Product Attention
+            Softmax normalizes the attention scores
+            Matrix multiplication with values computes the weighted representation"""
         # Compute attention output
         # Multiply attention weights with value tensor
         # Output shape: (batch_size, num_heads, sequence_length, d_k)
@@ -123,7 +141,13 @@ class MultiHeadAttention(nn.Module):
         # Input: (batch_size, sequence_length, d_model)
         # Output: (batch_size, sequence_length, d_model)
         self.W_o = nn.Linear(in_features=d_model, out_features=d_model, bias=True)
+        """
+        Paper Reference:
 
+            Page 3, Last paragraph of Section 3.2
+            "Finally, the multi-head attention performs a linear projection"
+            Concatenates head outputs and projects to d_model dimension
+        """
         # Single instance of SingleHeadAttention for efficient computation
         self.single_head_attention = SingleHeadAttention(num_heads=num_heads, d_model=d_model)
 
