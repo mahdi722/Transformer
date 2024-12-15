@@ -180,6 +180,7 @@ class MultiHeadAttention(nn.Module):
         output = self.W_o(output) # (batch_size, sequence_length, d_model)
 
         return output
+
     
 
 # # Instantiate and use the MultiHeadAttention
