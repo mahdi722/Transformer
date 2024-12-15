@@ -181,13 +181,6 @@ class MultiHeadAttention(nn.Module):
 
         return output
     
-# batch_size = 4
-# sequence_length = 6
-# d_model = 512
-# num_heads = 8
-# query = torch.randn(batch_size, sequence_length, d_model)  # Example input tensor
-# key = torch.randn(batch_size, sequence_length, d_model)    # Example key tensor
-# value = torch.randn(batch_size, sequence_length, d_model)  # Example value tensor
 
 # # Instantiate and use the MultiHeadAttention
 # multi_head_attention = MultiHeadAttention(num_heads=num_heads, d_model=d_model)
