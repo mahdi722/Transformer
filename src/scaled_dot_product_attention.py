@@ -62,36 +62,34 @@ class SingleHeadAttention(nn.Module):
         # (batch_size, sequence_length, d_model) 
         # -> (batch_size, sequence_length, num_heads, d_k) with view operation
         # -> (batch_size, num_heads, sequence_length, d_k) with transpose operation
-        Q = self.w_q(query).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
-        K = self.w_k(key).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
-        V = self.w_v(value).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(1, 2)
-        
+        Q = self.w_q(query).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(dim0=2, dim1=1)
+        K = self.w_k(key).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(dim0=2, dim1=1)
+        V = self.w_v(value).view(batch_size, seq_len, self.num_heads, self.d_k).transpose(dim0=2, dim1=1)
         # Compute attention scores
         # Q shape: (batch_size, num_heads, sequence_length, d_k)
         # K transposed shape: (batch_size, num_heads, d_k, sequence_length)
         # Result score shape: (batch_size, num_heads, sequence_length, sequence_length)
-        score = torch.matmul(Q, K.transpose(-2, -1)) / torch.sqrt(input=torch.tensor(data=self.d_k, dtype=torch.float32))
-
+        scores = torch.matmul(input=Q, other=K.transpose(dim0=-2, dim1=-1)) / torch.sqrt(input=torch.tensor(data=self.d_k, dtype=torch.float32))
         # Apply mask if provided
         # Masks out certain attention connections by setting them to -inf
         if mask is not None:
-            score = score.masked_fill(mask == 0, float('-inf'))
+            scores = scores.masked_fill(mask == 0, value=torch.float('-inf'))
         
         # Compute attention weights using softmax
         # Softmax applied across the last dimension
         # attention_weight shape: (batch_size, num_heads, sequence_length, sequence_length)
-        attention_weight = F.softmax(score, dim=-1)
+        attention_weight = F.softmax(input=scores, dim=-1)
 
         # Compute attention output
         # Multiply attention weights with value tensor
         # Output shape: (batch_size, num_heads, sequence_length, d_k)
-        output = torch.matmul(attention_weight, V)
+        output = torch.matmul(input=attention_weight, other=V)
 
         # Reshape output back to original dimensions
         # (batch_size, num_heads, sequence_length, d_k) 
         # -> (batch_size, sequence_length, num_heads, d_k) with transpose operation
         # -> (batch_size, sequence_length, d_model) with view operation
-        output = output.transpose(1, 2).contiguous().view(batch_size, seq_len, self.d_model)
+        output = output.transpose(dim0=1, dim1=2).contiguous().view(batch_size, seq_len, self.d_model)
 
         return output, attention_weight
 
@@ -147,7 +145,6 @@ class MultiHeadAttention(nn.Module):
             output (Tensor): Multi-head attention output 
                 - Shape: (batch_size, sequence_length, d_model)
         """
-        batch_size, seq_len, _ = query.size()
 
         # Perform single-pass multi-head attention
         # Input and output shapes: (batch_size, sequence_length, d_model)
