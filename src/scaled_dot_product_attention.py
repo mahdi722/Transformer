@@ -172,7 +172,7 @@ class MultiHeadAttention(nn.Module):
 
         # Perform single-pass multi-head attention
         # Input and output shapes: (batch_size, sequence_length, d_model)
-        output, _ = self.single_head_attention(query, key, value, mask)
+        output, _ = self.single_head_attention(query=query, key=key, value=value, mask=mask)
         
         # Final linear projection
         # Applies linear transformation to the attention output
@@ -181,9 +181,4 @@ class MultiHeadAttention(nn.Module):
 
         return output
 
-    
 
-# # Instantiate and use the MultiHeadAttention
-# multi_head_attention = MultiHeadAttention(num_heads=num_heads, d_model=d_model)
-# output = multi_head_attention(query=query, key=key, value=value)
-# print(output.shape)  # Should be (batch_size, sequence_length, d_model)
